@@ -1,40 +1,123 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# File Upload to S3 with Next.js 🚀
 
-## Getting Started
+This project allows you to upload files to an **Amazon S3 bucket** using a **Next.js API route**. It uses `formidable` for handling file uploads and the AWS SDK v3 to upload files to S3.
 
-First, run the development server:
+## 🚀 Features
+- Upload files to AWS S3 using a Next.js API.
+- Uses `formidable` to parse multipart form data.
+- Secure file handling with buffer processing.
+- Supports TypeScript for type safety.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🛠️ Installation
+1. Clone this repository:
+   ```sh
+   git clone https://github.com/your-username/your-repo.git
+   cd your-repo
+   ```
+
+2. Install dependencies:
+   ```sh
+   npm install
+   ```
+
+## ⚙️ Configuration
+### 1. Set up AWS credentials
+Make sure you have an IAM user with `s3:PutObject` permissions for your bucket. Store the credentials in `.env.local`:
+
+```env
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_REGION=your-region
+AWS_S3_BUCKET=your-bucket-name
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Create the API Route
+Inside `pages/api/upload.ts`:
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+```ts
+import { NextApiRequest, NextApiResponse } from "next";
+import formidable, { Fields, Files } from "formidable";
+import fs from "fs";
+import { uploadFileToS3 } from "../../lib/s3";
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  const form = new formidable.IncomingForm();
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+  form.parse(req, async (err: Error | null, fields: Fields, files: Files) => {
+    if (err) {
+      return res.status(500).json({ error: "Error parsing form data" });
+    }
 
-## Learn More
+    const file = files.file?.[0];
+    if (!file) {
+      return res.status(400).json({ error: "File is required." });
+    }
 
-To learn more about Next.js, take a look at the following resources:
+    const fileBuffer = fs.readFileSync(file.filepath);
+    const fileName = await uploadFileToS3(fileBuffer, file.originalFilename!);
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+    return res.status(200).json({ success: true, fileName });
+  });
+}
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 3. S3 Upload Logic
+Inside `lib/s3.ts`:
 
-## Deploy on Vercel
+```ts
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { Readable } from "stream";
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+export async function uploadFileToS3(fileBuffer: Buffer, fileName: string) {
+  const params = {
+    Bucket: process.env.AWS_S3_BUCKET!,
+    Key: fileName,
+    Body: Readable.from(fileBuffer),
+  };
+
+  await s3Client.send(new PutObjectCommand(params));
+  return fileName;
+}
+```
+
+## 🔥 Usage
+### API Endpoint
+Make a `POST` request to `/api/upload` with `multipart/form-data` containing a file:
+
+```sh
+curl -X POST http://localhost:3000/api/upload \
+     -F "file=@path/to/your/file.png"
+```
+
+### Response Example
+```json
+{
+  "success": true,
+  "fileName": "uploaded-file.png"
+}
+```
+
+## 🏗️ Roadmap
+- [ ] Add file size validation.
+- [ ] Implement file type restrictions.
+- [ ] Add support for signed URLs.
+
+## 📜 License
+This project is open-source under the **MIT License**.
+
+---
+Made with ❤️ by [teffcode](https://github.com/teffcode).
