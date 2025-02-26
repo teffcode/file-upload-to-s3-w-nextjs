@@ -2,6 +2,10 @@
 
 This project allows you to upload files to an **Amazon S3 bucket** using a **Next.js API route**. It uses `formidable` for handling file uploads and the AWS SDK v3 to upload files to S3.
 
+<kbd>
+<img width="1035" alt="Screenshot 2025-02-26 at 4 10 14 PM" src="https://github.com/user-attachments/assets/02bff5aa-5022-4957-b4a6-765969790cd3" />
+</kbd>
+
 ## 🚀 Features
 - Upload files to AWS S3 using a Next.js API.
 - Uses `formidable` to parse multipart form data.
