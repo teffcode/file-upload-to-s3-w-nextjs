@@ -6,6 +6,11 @@ This project allows you to upload files to an **Amazon S3 bucket** using a **Nex
 <img width="1035" alt="Screenshot 2025-02-26 at 4 10 14 PM" src="https://github.com/user-attachments/assets/02bff5aa-5022-4957-b4a6-765969790cd3" />
 </kbd>
 
+> Remember: disable this access
+<kbd>
+   <img width="1728" alt="Screenshot 2025-02-26 at 4 34 33 PM" src="https://github.com/user-attachments/assets/48401e76-6fb2-4723-b2c1-6b514720e361" />
+</kbd>
+
 ## 🚀 Features
 - Upload files to AWS S3 using a Next.js API.
 - Uses `formidable` to parse multipart form data.
